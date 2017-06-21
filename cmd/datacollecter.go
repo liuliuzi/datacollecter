@@ -7,7 +7,7 @@ import (
 	"time"
 	"github.com/emicklei/go-restful"
 	"github.com/emicklei/go-restful-swagger12"
-	"../pkg/api"
+	"github.com/liuliuzi/datacollecter/pkg/api"
 )
 
 func main() {
