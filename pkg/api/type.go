@@ -70,7 +70,6 @@ func (ms *MetricsService) createmetric(request *restful.Request, response *restf
 	} else {
 		fmt.Println("cannot pares request body")
 		fmt.Println(err)
-		fmt.Println("=================")
 		response.WriteError(http.StatusInternalServerError, err)
 	}
 }

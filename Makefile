@@ -7,17 +7,14 @@ COMMIT=`git rev-parse --short HEAD`
 all: build
 
 clean:
-	@rm -rf controller/controller
+	@rm -rf bin/*
 
 build:
-	@cd controller && godep go build -a -tags "netgo static_build" -installsuffix netgo -ldflags "-w -X github.com/shipyard/shipyard/version.GitCommit=$(COMMIT)" .
+	@cd cmd && go build  -tags netgo -o ../bin/datacollecter datacollecter.go
 
 image: build
 	@echo Building Shipyard image $(TAG)
-	@cd controller && docker build -t shipyard/shipyard:$(TAG) .
-
-release: build image
-	@docker push shipyard/shipyard:$(TAG)
+	@docker build -t rcp/datacollecter:$(TAG) .
 
 test: clean
 	@godep go test -v ./...
