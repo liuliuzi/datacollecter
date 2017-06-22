@@ -1,13 +1,9 @@
 package main
 import (
 	"flag"
-	"fmt"
 	"os"
-	"net/http"
-	"time"
-	"github.com/emicklei/go-restful"
-	"github.com/emicklei/go-restful-swagger12"
-	"github.com/liuliuzi/datacollecter/pkg/api"
+	"fmt"
+	"github.com/liuliuzi/datacollecter/cmd/app"
 )
 
 func main() {
@@ -17,27 +13,8 @@ func main() {
 
 	flag.Parse()
 
-	liveTimeDur,err := time.ParseDuration(*liveTime)
-	if err!=nil{
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
-	}
-
-	metricsApi := api.MetricsService{make(map[string]api.Metric),liveTimeDur}
-    metricsApi.Register()
-
-    config := swagger.Config{
-        WebServices:    restful.RegisteredWebServices(),
-        WebServicesUrl: "http://"+*localIP+":"+*localPort,
-        ApiPath:        "/apidocs.json",
-        //SwaggerPath:     "/apidocs/",
-        //SwaggerFilePath: "/Users/emicklei/Projects/swagger-ui/dist"
-    }
-
-    swagger.InstallSwaggerService(config)
-    err = http.ListenAndServe(*localIP+":"+*localPort, nil)
-    if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
+	if err := app.Run(*localIP,*localPort,*liveTime); err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
 	}
 }
