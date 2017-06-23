@@ -19,4 +19,4 @@ image: build
 test: clean
 	@godep go test -v ./...
 
-.PHONY: all build clean  image test release
+.PHONY: all build clean  image test

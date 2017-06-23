@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"errors"
 	"bytes"
-	//"fmt"
 	"strings"
 	"io/ioutil"
 	"github.com/emicklei/go-restful"
@@ -23,10 +22,12 @@ func waitForServerUp(serverURL string) error {
 	return errors.New("waiting for server timed out")
 }
 
+
+//for mode1
 func TestServer(t *testing.T) {
 	serverURL := "http://0.0.0.0:8060/metrics"
 	go func() {
-		if err := app.Run("0.0.0.0","8060","5s"); err != nil {
+		if err := app.Run(0,"0.0.0.0","8060","5s","",""); err != nil {
 			t.Errorf("%v", err)
 			}
 	}()

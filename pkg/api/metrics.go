@@ -1,20 +1,13 @@
 package api
 import (
 	"net/http"
-	"github.com/emicklei/go-restful"
+	"strconv"
 	"fmt"
 	"time"
+	"github.com/emicklei/go-restful"
+	"k8s.io/heapster/metrics/core"	
+	"github.com/liuliuzi/datacollecter/pkg/util"
 )
-
-type MetricsService struct {
-	MetricsCache  map[string]Metric
-	LiveSeconds    time.Duration
-}
-
-type Metric struct {
-	MetricValue string
-	Timestamp time.Time
-}
 
 func (ms MetricsService)valideTime(sampleTime time.Time) bool{
 	curTime:=time.Now()
@@ -65,13 +58,38 @@ func (ms *MetricsService) createmetric(request *restful.Request, response *restf
 	metric := new(Metric)
 	err := request.ReadEntity(&metric)
 	if err == nil {
-		ms.MetricsCache[metricType]=*metric
-		response.WriteHeaderAndEntity(http.StatusCreated, metric)
+		if ms.Mode==0 {
+			ms.MetricsCache[metricType]=*metric
+			response.WriteHeaderAndEntity(http.StatusCreated, metric)
+		}else{
+			ms.Pushinfluxdb(metricType,*metric)
+			response.WriteHeaderAndEntity(http.StatusCreated, metric)
+		}
+
 	} else {
 		fmt.Println("cannot pares request body")
 		fmt.Println(err)
 		response.WriteError(http.StatusInternalServerError, err)
 	}
 }
+
+func (ms *MetricsService)Pushinfluxdb(metricType string,metric Metric) {
+	fmt.Println("Push data to influxdb")
+	metricValues:=make(map[string]core.MetricValue)
+	MetricValueF64,_:=strconv.ParseFloat(metric.MetricValue, 32)
+
+	metricValues["custom/"+metricType]=core.MetricValue{0,float32(MetricValueF64),core.MetricGauge,core.ValueFloat}
+	labels:=util.BuildLabel()
+
+	MetricSet:=core.MetricSet{time.Now(),metric.Timestamp,metricValues,labels,nil}
+	MetricSets:=make(map[string]*core.MetricSet)
+	MetricSets["1"]=&MetricSet
+	databatch:=core.DataBatch{time.Now(), MetricSets}
+
+	ms.InfluxdbSink.ExportData(&databatch)
+
+}
+
+
 
 
