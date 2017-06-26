@@ -11,7 +11,6 @@ func BuildLabel() map[string]string{
     labels["namespace_name"]="default"
     return labels
     // TODO get more labels
-    //labels["namespace_name"]="default"
     //labels["app"]="kubia"
-
+    //get labels["pod_name"] from k8s api
 }

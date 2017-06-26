@@ -1,12 +1,14 @@
 package app
 import (
-	"net/http"
 	"net/url"
+	"net/http"
 	"time"
 	"fmt"
+	"errors"
 	"github.com/emicklei/go-restful"
 	"github.com/emicklei/go-restful-swagger12"
 	"github.com/liuliuzi/datacollecter/pkg/api"
+	"github.com/liuliuzi/datacollecter/cmd/app/options"
 	"k8s.io/heapster/common/flags"
 	"k8s.io/heapster/metrics/sinks/influxdb"
 	"k8s.io/heapster/metrics/core"
@@ -14,45 +16,46 @@ import (
 
 
 
-
-func Run(mode int,localIP string,localPort string,liveTime string ,influxdbIP string,influxdbPort string) error {
-	liveTimeDur,err := time.ParseDuration(liveTime)
+func Run(opt *options.DatacollecterRunOptions) error {
+//func Run(mode int,localIP string,localPort string,liveTime string ,influxdbIP string,influxdbPort string) error {
+	liveTimeDur,err := time.ParseDuration(opt.LiveTime)
 	if err!=nil{
 		return err
 	}
+	if opt.Mode!=0 && opt.Mode!=1{
+		errors.New("invalid mode")
+		return err
+	}
 
-	var InfluxdbSink core.DataSink
-	if mode==1{
-		influxdbURLString:="http://"+influxdbIP+":"+influxdbPort
+	var influxdbSink core.DataSink
+	if opt.Mode==1{
+		influxdbURLString:="http://"+opt.InfluxdbIP+":"+opt.InfluxdbPort
 		influxdbURL,err  :=url.Parse(influxdbURLString)
 		if err != nil {
 			return err
 		}
 		uri              :=flags.Uri{"influxdb",*influxdbURL}
-		InfluxdbSink,err  =influxdb.CreateInfluxdbSink(&uri.Val)
+		influxdbSink,err  =influxdb.CreateInfluxdbSink(&uri.Val)
 		if err != nil {
 			return err
 		}
 	}
-
-	metricsApi := api.MetricsService{make(map[string]api.Metric),liveTimeDur,mode,InfluxdbSink}
+	metricsApi := api.MetricsService{make(map[string]api.Metric),liveTimeDur,opt.Mode,influxdbSink}
     metricsApi.Register()
 
     config := swagger.Config{
         WebServices:    restful.RegisteredWebServices(),
-        WebServicesUrl: "http://"+localIP+":"+localPort,
+        WebServicesUrl: "http://"+opt.LocalIP+":"+opt.LocalPort,
         ApiPath:        "/apidocs.json",
-        //SwaggerPath:     "/apidocs/",
-        //SwaggerFilePath: "/Users/emicklei/Projects/swagger-ui/dist"
     }
 
     swagger.InstallSwaggerService(config)
-    if mode==1{
-    	fmt.Println("start app in mode 1")
+    if opt.Mode==1{
+    	fmt.Println("start app in mode directly")
     }else{
-    	fmt.Println("start app in mode 0")
+    	fmt.Println("start app in mode indirectly")
     }
-    err = http.ListenAndServe(localIP+":"+localPort, nil)
+    err = http.ListenAndServe(opt.LocalIP+":"+opt.LocalPort, nil)
     if err != nil {
 		return err
 	}

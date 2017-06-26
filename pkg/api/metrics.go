@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 	"github.com/emicklei/go-restful"
-	"k8s.io/heapster/metrics/core"	
+	"k8s.io/heapster/metrics/core"
 	"github.com/liuliuzi/datacollecter/pkg/util"
 )
 
